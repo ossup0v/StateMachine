@@ -21,9 +21,12 @@ public abstract class StateMachineDescription<TEnumState, TContext, TStateMachin
     {
         _ = _context ?? throw new InvalidOperationException($"Trying to add state {enumState}. {state.GetType().Name} when context is null.");
 
-        _currentState ??= state; // first registered state is current state by default
-            
+        // first registered state is current state by default
+        _currentState ??= state;
+        
+        // current state for switcher it state for make description. not for execute states
         _switcher.SetCurrentState(enumState);
+
         _states.Add(enumState, state);
         return _switcher;
     }
