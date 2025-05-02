@@ -12,7 +12,7 @@ class Program
     {
         var network = new NetworkStateMachineDescription();
 
-        var cnx = new NetworkStateContext(new ConsoleLogger("Network"));
+        using var cnx = new NetworkContext(new WebSocketTransport(), new ConsoleLogger("Network"));
         
         network.SetContext(cnx);
 
@@ -36,7 +36,7 @@ class Program
             .To(context => !context.GotError, NetworkState.Stopped);
 
         var options = new StateMachineOptions(TimeSpan.FromMilliseconds(500));
-        var networkThread = new StateMachineThread<NetworkState, NetworkStateContext, NetworkStateMachineDescription>(network, options);
+        var networkThread = new StateMachineThread<NetworkState, NetworkContext, NetworkStateMachineDescription>(network, options);
         
         networkThread.Start();
         SendRequestsThread(cnx).Forget();
@@ -51,7 +51,7 @@ class Program
     private static volatile int _requestIndex = 1; 
     private static volatile int _responseIndex = 1; 
     
-    private static Task SendRequestsThread(NetworkStateContext cnx)
+    private static Task SendRequestsThread(NetworkContext cnx)
     {
         return Task.Run(async () =>
         {
@@ -64,7 +64,7 @@ class Program
         });
     }
     
-    private static Task AddResponsesThread(NetworkStateContext cnx)
+    private static Task AddResponsesThread(NetworkContext cnx)
     {
         return Task.Run(async () =>
         {

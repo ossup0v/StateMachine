@@ -189,6 +189,14 @@ namespace StateMachine.AsyncEx {
 			}
 		}
 
+		public async Task<bool> IsEmptyAsync()
+		{
+			using (await _mutex.LockAsync().ConfigureAwait(false))
+			{
+				return Empty;
+			}
+		}
+
 		/// <summary>
 		///     Asynchronously waits until an item is available to dequeue. Returns <c>false</c> if the producer/consumer queue has
 		///     completed adding and there are no more items.

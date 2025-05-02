@@ -2,11 +2,15 @@ using StateMachine.StateMachineBase;
 
 namespace StateMachine.Example;
 
-public class ConnectingState : IState<NetworkStateContext>
+public class ConnectingState : IState<NetworkContext>
 {
-    public Task Run(NetworkStateContext context, CancellationToken ct)
+    public Task Enter(NetworkContext context, CancellationToken ct) => Task.CompletedTask;
+
+    public Task Execute(NetworkContext context, CancellationToken ct)
     {
         context.Connected = true;
         return Task.CompletedTask;
     }
+
+    public Task Exit(NetworkContext context, CancellationToken ct) => Task.CompletedTask;
 }

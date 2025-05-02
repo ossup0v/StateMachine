@@ -34,16 +34,22 @@ public class StateMachineThread<TEnumState, TContext, TStateMachine>
             while (!_cts.IsCancellationRequested)
             {
                 // todo try cache ?
-                _stateMachineDescription.TrySwitchState();
-                await _stateMachineDescription.ExecuteCurrentState(_cts.Token);
+                if (_stateMachineDescription.TryGetNewState(out var newState))
+                {
+                    // old state
+                    await _stateMachineDescription.ExitCurrentState(_cts.Token);
+                    
+                    _stateMachineDescription.SwitchState(newState!);
+
+                    // new state
+                    await _stateMachineDescription.EnterCurrentState(_cts.Token);
+                    await _stateMachineDescription.ExecuteCurrentState(_cts.Token);
+                }
 
                 await Task.Delay(_options.DelayBetweenLoopIteration, _cts.Token);
             }
         }
-        catch (OperationCanceledException)
-        {
-            
-        }
+        catch (OperationCanceledException) { }
 
         Console.WriteLine("[MainLoop] End");
     }

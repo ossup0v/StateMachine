@@ -4,10 +4,9 @@ public abstract class StateMachineDescription<TEnumState, TContext, TStateMachin
     where TContext : IStateContext 
     where TStateMachine : StateMachineDescription<TEnumState, TContext, TStateMachine>
     where TEnumState : struct, Enum 
-        
 {
     private readonly StateSwitcher<TEnumState, TContext> _switcher = new (); 
-    private readonly Dictionary<TEnumState, IState<TContext>> _states = new ();
+    private readonly Dictionary<TEnumState, IState<TContext>?> _states = new ();
     private IState<TContext>? _currentState;
     private TContext? _context;
 
@@ -31,25 +30,46 @@ public abstract class StateMachineDescription<TEnumState, TContext, TStateMachin
         return _switcher;
     }
 
-    public void TrySwitchState()
+    public bool TryGetNewState(out IState<TContext>? newCurrentState)
     {
         _ = _context ?? throw new InvalidOperationException("Trying to switch state when context is null.");
 
         if (_switcher.TrySwitchState(_context, out var newState))
         {
-            if (!_states.TryGetValue(newState, out var newCurrentState))
+            if (!_states.TryGetValue(newState, out newCurrentState))
                 throw new InvalidOperationException(
                     $"Trying to switch to state {newState}, but have no state like this in states. All states:[{string.Join(", ", _states.Keys)}]");
-                
-            _currentState = newCurrentState;
+            
+            return true;
         }
-    }
 
-    public async Task ExecuteCurrentState(CancellationToken ct)
+        newCurrentState = null;
+        return false;
+    }
+    
+    public void SwitchState(IState<TContext> newState) => _currentState = newState;
+
+    public Task EnterCurrentState(CancellationToken ct)
     {
         _ = _context ?? throw new InvalidOperationException("Trying to execute current state when context is null.");
         _ = _currentState ?? throw new InvalidOperationException("Trying to execute current state when currentState is null.");
 
-        await _currentState.Run(_context, ct);
+        return _currentState.Enter(_context, ct);
+    }
+
+    public Task ExecuteCurrentState(CancellationToken ct)
+    {
+        _ = _context ?? throw new InvalidOperationException("Trying to execute current state when context is null.");
+        _ = _currentState ?? throw new InvalidOperationException("Trying to execute current state when currentState is null.");
+
+        return _currentState.Execute(_context, ct);
+    }
+
+    public Task ExitCurrentState(CancellationToken ct)
+    {
+        _ = _context ?? throw new InvalidOperationException("Trying to execute current state when context is null.");
+        _ = _currentState ?? throw new InvalidOperationException("Trying to execute current state when currentState is null.");
+
+        return _currentState.Exit(_context, ct);
     }
 }
