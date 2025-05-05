@@ -11,10 +11,7 @@ public class ReadyState : IState<NetworkContext>
         return Task.CompletedTask;
     }
 
-    public Task Execute(NetworkContext context, CancellationToken ct)
-    {
-        return Task.CompletedTask;
-    }
+    public Task Execute(NetworkContext context, CancellationToken ct) => Task.CompletedTask;
 
     public Task Exit(NetworkContext context, CancellationToken ct)
     {

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using StateMachine.AsyncEx;
 using StateMachine.Loggers;
 using StateMachine.StateMachineBase;
@@ -8,12 +9,18 @@ public class NetworkContext : IStateContext, IDisposable
 {
     public bool Connected { get; set; }
     public bool StartConnect { get; set; }
-    public bool GotError { get; set; }
+    public bool GotError => Error != null;
+    
+    public Exception? Error { get; set; }
+    
     public ILogger Logger { get; set; }
 
     public readonly ITransport Transport;
 
-    private readonly AsyncProducerConsumerQueue<Request> _requestQueue = new();
+    public readonly ConcurrentBag<int> ReceivedResponses = new (); 
+    public readonly ConcurrentDictionary<int, Request> PendingRequests = new();
+
+    public readonly AsyncProducerConsumerQueue<Request> RequestQueue = new();
     public event Func<Task> OnRequestReceived = () => Task.CompletedTask;
     public readonly IRequestSender RequestSender;
     
@@ -33,7 +40,7 @@ public class NetworkContext : IStateContext, IDisposable
 
     public async Task AddRequest(Request request)
     {
-        await _requestQueue.EnqueueAsync(request);
+        await RequestQueue.EnqueueAsync(request);
         await OnRequestReceived();
     }
 
@@ -45,12 +52,12 @@ public class NetworkContext : IStateContext, IDisposable
 
     public Task<bool> RequestsIsEmptyAsync()
     {
-        return _requestQueue.IsEmptyAsync();
+        return RequestQueue.IsEmptyAsync();
     }
 
     public Task<Request> DequeueRequest()
     {
-        return _requestQueue.DequeueAsync();
+        return RequestQueue.DequeueAsync();
     }
 
     public Task<bool> ResponsesIsEmptyAsync()
@@ -66,5 +73,10 @@ public class NetworkContext : IStateContext, IDisposable
     public void Dispose()
     {
         Transport.OnResponseReceived -= ResponseReceived;
+    }
+
+    public void SetTimeoutException(Request request)
+    {
+        Error = new Exception($"Timeout from request {request}");
     }
 }

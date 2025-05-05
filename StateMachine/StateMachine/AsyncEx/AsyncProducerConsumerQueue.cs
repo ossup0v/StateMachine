@@ -272,6 +272,12 @@ namespace StateMachine.AsyncEx {
 				return item;
 			}
 		}
+		
+		public async Task<T[]> ToArrayAsync(bool sync = false) {
+			using (sync ? _mutex.Lock() : await _mutex.LockAsync().ConfigureAwait(false)) {
+				return _queue.ToArray();
+			}
+		}
 
 		/// <summary>
 		///     Dequeues an item from the producer/consumer queue. Throws <see cref="InvalidOperationException" /> if the

@@ -10,15 +10,16 @@ public class WebSocketTransport : ITransport
 
     public Task Send(Request request, CancellationToken ct)
     {
-        if (int.Parse(request.Name.Last().ToString()) % 3 == 0) throw new Exception($"Invalid request {request}");
+        //if (int.Parse(request.Name.Last().ToString()) % 3 == 0) throw new Exception($"Invalid request {request}");
         
-        Console.WriteLine($"[WS] Sent {request.Name}");
+        Console.WriteLine($"[WS] Sent {request}");
         return Task.CompletedTask;
     }
 
     public async Task InsertResponseToQueue(Response response, CancellationToken ct)
     {
         using var _ = await _receiveLock.LockAsync(ct);
+        //await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(0, 2000)), ct);
         await OnResponseReceived(response);
     }
 }
