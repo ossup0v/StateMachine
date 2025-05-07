@@ -1,8 +1,11 @@
 ﻿#nullable enable
 using System.Collections.Concurrent;
+using System.Net.WebSockets;
+using System.Text;
+using Shared.Contracts;
 using StateMachine.AsyncEx;
-using StateMachine.Example;
 using StateMachine.Loggers;
+using StateMachine.NetworkStateMachine;
 using StateMachine.StateMachineBase;
 
 namespace StateMachine;
@@ -11,37 +14,37 @@ class Program
 {
     static async Task Main()
     {
+
         var network = new NetworkStateMachineDescription();
 
         using var cnx = new NetworkContext(new WebSocketTransport(), new ConsoleLogger("Network"));
-        
+
         network.SetContext(cnx);
 
-        network.AddState(NetworkState.Stopped, new StoppedState())
-            .To(context => context.StartConnect, NetworkState.Connecting)
-            .To(context => context.GotError, NetworkState.GotError);
-
         network.AddState(NetworkState.Connecting, new ConnectingState())
-            .To(context => context.Connected, NetworkState.Ready)
-            .To(context => context.GotError, NetworkState.GotError);
+            .To(context => context.GotError, NetworkState.GotError)
+            .To(context => context.Connected, NetworkState.Ready);
 
         network.AddState(NetworkState.Ready, new ReadyState())
-            .To(context => !context.Connected, NetworkState.Stopping)
-            .To(context => context.GotError, NetworkState.GotError);
+            .To(context => context.GotError, NetworkState.GotError)
+            .To(context => !context.Connected, NetworkState.Stopping);
 
         network.AddState(NetworkState.Stopping, new StoppingState())
-            .To(context => !context.Connected && !context.StartConnect, NetworkState.Stopped)
-            .To(context => context.GotError, NetworkState.GotError);
+            .To(context => context.GotError, NetworkState.GotError)
+            .To(context => !context.Connected, NetworkState.Stopped);
 
         network.AddState(NetworkState.GotError, new GotErrorState())
-            .To(context => !context.GotError, NetworkState.Stopped);
+            .To(context => !context.GotError, NetworkState.Stopping);
+
+        network.AddState(NetworkState.Stopped, new StoppedState())
+            .To(context => context.GotError, NetworkState.GotError)
+            .To(context => !context.Connected, NetworkState.Connecting);
 
         var options = new StateMachineOptions(TimeSpan.FromMilliseconds(500));
         var networkThread = new StateMachineThread<NetworkState, NetworkContext, NetworkStateMachineDescription>(network, options);
-        
+
         networkThread.Start();
         SendRequestsThread(cnx).Forget();
-        AddResponsesThread(cnx).Forget();
         HealthCheckThread(cnx).Forget();
         Console.WriteLine("Press any key Stop Thread...");
         Console.ReadLine();
@@ -62,7 +65,7 @@ class Program
             while (_requestIndex < 20)
             {
                 await Task.Delay(TimeSpan.FromSeconds(Random.Shared.Next(1, 3)));
-                var request = new Request(_requestIndex, $"request");
+                var request = new Request(_requestIndex, "Test");
                 await cnx.AddRequest(request);
                 SentRequestIds.Add(request.Id);
                 Interlocked.Increment(ref _requestIndex);
@@ -91,30 +94,5 @@ class Program
         });
     }
     // client
-    
-    // server 
-    private static Task AddResponsesThread(NetworkContext cnx)
-    {
-        return Task.Run(async () =>
-        {
-            while (_responseIndex < 20)
-            {
-                while (SentRequestIds.IsEmpty) { }
-                
-                int? responseId = null;
-                if (SentRequestIds.TryTake(out var requestId))
-                {
-                    responseId = requestId;
-                }
-
-                await cnx.Transport.InsertResponseToQueue(new Response(responseId, $"Response #{responseId?.ToString() ?? "[NaN]"}"), CancellationToken.None);
-                
-                Interlocked.Increment(ref _responseIndex);
-
-                await Task.Delay(TimeSpan.FromSeconds(Random.Shared.Next(1, 3)));
-            }
-        });
-    }
-    // server 
     
 }

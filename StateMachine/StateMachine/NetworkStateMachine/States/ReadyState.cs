@@ -1,6 +1,6 @@
 using StateMachine.StateMachineBase;
 
-namespace StateMachine.Example;
+namespace StateMachine.NetworkStateMachine;
 
 public class ReadyState : IState<NetworkContext>
 {
@@ -11,7 +11,11 @@ public class ReadyState : IState<NetworkContext>
         return Task.CompletedTask;
     }
 
-    public Task Execute(NetworkContext context, CancellationToken ct) => Task.CompletedTask;
+    public async Task Execute(NetworkContext context, CancellationToken ct)
+    {
+        await context.RequestSender.Send();
+        await context.ResponseProcessor.Process();
+    }
 
     public Task Exit(NetworkContext context, CancellationToken ct)
     {

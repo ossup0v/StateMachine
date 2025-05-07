@@ -1,6 +1,6 @@
 using StateMachine.StateMachineBase;
 
-namespace StateMachine.Example;
+namespace StateMachine.NetworkStateMachine;
 
 public class GotErrorState : IState<NetworkContext>
 {

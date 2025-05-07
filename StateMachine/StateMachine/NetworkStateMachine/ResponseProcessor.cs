@@ -1,6 +1,6 @@
 using StateMachine.AsyncEx;
 
-namespace StateMachine.Example;
+namespace StateMachine.NetworkStateMachine;
 
 public class ResponseProcessor : IResponseProcessor
 {

@@ -1,14 +1,14 @@
 using System.Collections.Concurrent;
+using Shared.Contracts;
 using StateMachine.AsyncEx;
 using StateMachine.Loggers;
 using StateMachine.StateMachineBase;
 
-namespace StateMachine.Example;
+namespace StateMachine.NetworkStateMachine;
 
 public class NetworkContext : IStateContext, IDisposable
 {
     public bool Connected { get; set; }
-    public bool StartConnect { get; set; }
     public bool GotError => Error != null;
     
     public Exception? Error { get; set; }
