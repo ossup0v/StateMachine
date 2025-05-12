@@ -1,4 +1,4 @@
-namespace StateMachine.Example;
+namespace StateMachine.NetworkStateMachine;
 
 public interface IRequestSender
 {

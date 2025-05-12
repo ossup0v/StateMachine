@@ -1,6 +1,6 @@
 using StateMachine.AsyncEx;
 
-namespace StateMachine.Example;
+namespace StateMachine.NetworkStateMachine;
 
 public class RequestSender : IRequestSender
 {
@@ -25,17 +25,17 @@ public class RequestSender : IRequestSender
 
                 if (_context.GotError)
                 {
-                    _context.Logger.LogError($"Trying to send request {request}, but got error.");
+                    _context.Logger.LogError($"Trying to send {request}, but got error.");
                     return;
                 }
 
                 if (!_context.PendingRequests.TryAdd(request.Id, request))
                 {
-                    _context.Logger.LogInformation($"Can't add request {request} to pending requests.");
+                    _context.Logger.LogInformation($"Can't add {request} to pending requests.");
                 }
                 else
                 {
-                    _context.Logger.LogInformation($"Request {request} added to pending requests.");
+                    _context.Logger.LogInformation($"{request} added to pending requests.");
                 }
                 request.SentTime = DateTime.UtcNow;
                 await transport.Send(request, CancellationToken.None);

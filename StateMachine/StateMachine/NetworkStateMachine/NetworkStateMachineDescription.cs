@@ -1,6 +1,6 @@
 using StateMachine.StateMachineBase;
 
-namespace StateMachine.Example;
+namespace StateMachine.NetworkStateMachine;
 
 public class NetworkStateMachineDescription 
     : StateMachineDescription<NetworkState, NetworkContext, NetworkStateMachineDescription> 
