@@ -80,19 +80,20 @@ public class WebSocketTransport : ITransport
 
     public async Task<Response> SendAndWait(Request request, CancellationToken ct)
     {
-        await Send(request, ct);
         Response? response = default;
         var wait = new AsyncEvent();
-
         Task ResponseReceived(Response rsp)
         {
+            if (request.Id != rsp.RequestId) return Task.CompletedTask;
+            
             response = rsp;
             wait.FireEvent();
             Console.WriteLine($"[WS] Send And Wait Received {response}");
             return Task.CompletedTask;
         }
-
         OnResponseReceived += ResponseReceived;
+        
+        await Send(request, ct);
         await wait.WaitAsync(ct);
         
         OnResponseReceived -= ResponseReceived;
