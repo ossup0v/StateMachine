@@ -6,8 +6,6 @@ public class ReadyState : IState<NetworkContext>
 {
     public Task Enter(NetworkContext context, CancellationToken ct)
     {
-        context.OnRequestReceived += context.RequestSender.Send;
-        context.OnResponseReceived += context.ResponseProcessor.Process;
         return Task.CompletedTask;
     }
 
@@ -19,8 +17,6 @@ public class ReadyState : IState<NetworkContext>
 
     public Task Exit(NetworkContext context, CancellationToken ct)
     {
-        context.OnRequestReceived -= context.RequestSender.Send;
-        context.OnResponseReceived -= context.ResponseProcessor.Process;
         return Task.CompletedTask;
     }
 }
